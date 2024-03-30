@@ -2,6 +2,8 @@ package com.example.Remittance.serviceimpl;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -52,24 +54,52 @@ public class WithdrawalRequestServiceImpl implements WithdrawalRequestService  {
         return withdrawalRequestRepository.save(withdrawalRequest);
     }
     
+//    @Transactional
+//    @Override
+//    public List<WithdrawalRequestDto> findPendingWithdrawalsByReceiverId(Long receiverId) {
+//        List<WithdrawalRequest> pendingRequests = withdrawalRequestRepository.findByReceiverIdAndStatus(receiverId, WithdrawalStatus.PENDING);
+//        return pendingRequests.stream().map(request -> {
+//            LocalDate initiatedDate = convertToLocalDateViaInstant(request.getCurrentDate());
+//            long daysPending = initiatedDate.until(LocalDate.now()).getDays();
+//
+//
+//            return new WithdrawalRequestDto(
+//                request.getSender().getUserName(),
+//                initiatedDate,
+//                request.getSwiftNumber(),
+//                request.getClaimAmount(),
+//                daysPending,
+//                request.getRejectionReason()
+//            );
+//        }).collect(Collectors.toList());
+//    }
+    
     @Transactional
     @Override
     public List<WithdrawalRequestDto> findPendingWithdrawalsByReceiverId(Long receiverId) {
         List<WithdrawalRequest> pendingRequests = withdrawalRequestRepository.findByReceiverIdAndStatus(receiverId, WithdrawalStatus.PENDING);
-        return pendingRequests.stream().map(request -> {
-            LocalDate initiatedDate = convertToLocalDateViaInstant(request.getCurrentDate());
-            long daysPending = initiatedDate.until(LocalDate.now()).getDays();
+        List<WithdrawalRequestDto> resultDtos = new ArrayList<>();
 
+        for (WithdrawalRequest request : pendingRequests) {
+            LocalDate initiatedDate = convertToLocalDateViaInstant(request.getRequestDate());
+            long daysPending = ChronoUnit.DAYS.between(initiatedDate, LocalDate.now());
 
-            return new WithdrawalRequestDto(
-                request.getSender().getUserName(),
-                initiatedDate,
-                request.getSwiftNumber(),
-                request.getClaimAmount(),
-                daysPending,
-                request.getRejectionReason()
-            );
-        }).collect(Collectors.toList());
+            if (daysPending >= 30) {
+                request.setStatus(WithdrawalStatus.EXPIRED);
+                withdrawalRequestRepository.save(request);
+            } else {
+                resultDtos.add(new WithdrawalRequestDto(
+                        request.getSender().getUserName(),
+                        initiatedDate,
+                        request.getSwiftNumber(),
+                        request.getClaimAmount(),
+                        daysPending,
+                        request.getRejectionReason()
+                ));
+            }
+        }
+
+        return resultDtos;
     }
     
     @Transactional
@@ -186,7 +216,7 @@ public class WithdrawalRequestServiceImpl implements WithdrawalRequestService  {
     
     @Override
     @Transactional
-    public void approveWithdrawalRequest(Long withdrawalRequestId) {
+    public void approveWithdrawalRequest(Long withdrawalRequestId, Long checkerId) {
         WithdrawalRequest withdrawalRequest = withdrawalRequestRepository.findById(withdrawalRequestId)
                 .orElseThrow(() -> new IllegalStateException("Withdrawal request not found"));
 
@@ -205,12 +235,13 @@ public class WithdrawalRequestServiceImpl implements WithdrawalRequestService  {
         fundTransferRepository.save(fundTransfer);
 
         withdrawalRequest.setStatus(WithdrawalStatus.SETTLED);
+        withdrawalRequest.setCheckerId(checkerId);
         withdrawalRequestRepository.save(withdrawalRequest);
     }
     
     @Override
     @Transactional
-    public void rejectWithdrawalRequest(Long withdrawalRequestId, String rejectionReason) {
+    public void rejectWithdrawalRequest(Long withdrawalRequestId, String rejectionReason, Long checkerId) {
         WithdrawalRequest withdrawalRequest = withdrawalRequestRepository.findById(withdrawalRequestId)
                 .orElseThrow(() -> new IllegalStateException("Withdrawal request not found"));
 
@@ -219,8 +250,21 @@ public class WithdrawalRequestServiceImpl implements WithdrawalRequestService  {
         }
 
         withdrawalRequest.setStatus(WithdrawalStatus.REJECTED);
-        withdrawalRequest.setRejectionReason(rejectionReason); // Ensure your WithdrawalRequest entity has a field for rejectionReason
+        withdrawalRequest.setRejectionReason(rejectionReason);
+        withdrawalRequest.setCheckerId(checkerId);
         withdrawalRequestRepository.save(withdrawalRequest);
+    }
+    
+    @Override
+    @Transactional
+    public List<WithdrawalRequest> getSettledWithdrawalRequestsByCheckerId(Long checkerId) {
+        return withdrawalRequestRepository.findByStatusAndCheckerId(WithdrawalStatus.SETTLED, checkerId);
+    }
+    
+    @Override
+    @Transactional
+    public List<WithdrawalRequest> getRejectedWithdrawalRequestsByCheckerId(Long checkerId) {
+        return withdrawalRequestRepository.findByStatusAndCheckerId(WithdrawalStatus.REJECTED, checkerId);
     }
     
     private LocalDate convertToLocalDateViaInstant(Date dateToConvert) {

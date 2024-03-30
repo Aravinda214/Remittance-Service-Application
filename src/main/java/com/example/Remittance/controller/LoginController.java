@@ -22,9 +22,9 @@ public class LoginController {
             // Successful authentication logic here.
             // You might return a JWT token or some form of session identifier.
             return ResponseEntity.ok().body("Login successful.");
-        } else {
-            // Respond with an appropriate message and HTTP status.
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password.");
+        } 
+        else {
+            throw new IllegalArgumentException("Invalid email or password.");
         }
     }
 }

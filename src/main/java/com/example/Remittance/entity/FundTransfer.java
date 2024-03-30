@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
+import com.example.Remittance.enums.Currency;
 import com.example.Remittance.enums.TransferStatus;
 
 @Entity
@@ -38,6 +39,10 @@ public class FundTransfer implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransferStatus status = TransferStatus.PENDING;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Currency currency;
 
     @PrePersist
     private void generateSwiftNumber() {
@@ -46,7 +51,7 @@ public class FundTransfer implements Serializable {
         this.swiftNumber = "FT" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
     }
 
-    public TransferStatus getStatus() {
+	public TransferStatus getStatus() {
         return status;
     }
 
@@ -101,5 +106,13 @@ public class FundTransfer implements Serializable {
     public void setFromCountry(String fromCountry) {
         this.fromCountry = fromCountry;
     }
+
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(Currency currency) {
+		this.currency = currency;
+	}
 }
 

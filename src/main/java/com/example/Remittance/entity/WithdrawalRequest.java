@@ -48,6 +48,9 @@ public class WithdrawalRequest implements Serializable {
 
     @Column(nullable = true)
     private String rejectionReason;
+    
+    @Column(nullable = true)
+    private Long checkerId;
 
     @PrePersist
     private void generateSwiftNumber() {
@@ -163,6 +166,22 @@ public class WithdrawalRequest implements Serializable {
 
 	public void setRejectionReason(String rejectionReason) {
 		this.rejectionReason = rejectionReason;
+	}
+
+	public Date getRequestDate() {
+		return requestDate;
+	}
+
+	public void setRequestDate(Date requestDate) {
+		this.requestDate = requestDate;
+	}
+
+	public Long getCheckerId() {
+		return checkerId;
+	}
+
+	public void setCheckerId(Long checkerId) {
+		this.checkerId = checkerId;
 	}
 
 	@Override

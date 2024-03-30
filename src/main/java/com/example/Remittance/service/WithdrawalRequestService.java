@@ -17,6 +17,8 @@ public interface WithdrawalRequestService {
 	List<WithdrawalRequestDto> findSettledWithdrawalsByReceiverId(Long receiverId);
 	List<WithdrawalRequestDto> findRejectedWithdrawalsByReceiverId(Long receiverId);
 	List<CheckerAdminDto> findAllPendingWithdrawals();
-	void approveWithdrawalRequest(Long withdrawalRequestId);
-	void rejectWithdrawalRequest(Long withdrawalRequestId, String rejectionReason);
+	void approveWithdrawalRequest(Long withdrawalRequestId, Long checkerId);
+	void rejectWithdrawalRequest(Long withdrawalRequestId, String rejectionReason, Long checkerId);
+	List<WithdrawalRequest> getSettledWithdrawalRequestsByCheckerId(Long checkerId);
+	List<WithdrawalRequest> getRejectedWithdrawalRequestsByCheckerId(Long checkerId);
 }
