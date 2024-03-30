@@ -21,10 +21,11 @@ public class FundTransferController {
     @PostMapping
     public ResponseEntity<FundTransfer> createFundTransfer(@RequestBody FundTransferRequest request) {
         FundTransfer fundTransfer = fundTransferService.createFundTransfer(
-                request.getSenderId(), 
+                request.getPhoneNumber(), 
                 request.getReceiverId(), 
                 request.getAmount(), 
-                request.getFromCountry());
+                request.getFromCountry(),
+                request.getCurrency());
 
         return new ResponseEntity<>(fundTransfer, HttpStatus.CREATED);
     }

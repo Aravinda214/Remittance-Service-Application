@@ -48,24 +48,46 @@ public class WithdrawalRequestController {
     public ResponseEntity<List<CheckerAdminDto>> findAllPendingWithdrawals() {
         return ResponseEntity.ok(withdrawalRequestService.findAllPendingWithdrawals());
     }
-
-    @PutMapping("/{withdrawalRequestId}/approve")
-    public ResponseEntity<Void> approveWithdrawalRequest(@PathVariable Long withdrawalRequestId) {
-        withdrawalRequestService.approveWithdrawalRequest(withdrawalRequestId);
-        return ResponseEntity.ok().build();
-    }
-
-    @PutMapping("/{withdrawalRequestId}/reject")
-    public ResponseEntity<Void> rejectWithdrawalRequest(@PathVariable Long withdrawalRequestId, 
-                                                        @RequestParam String rejectionReason) {
-        withdrawalRequestService.rejectWithdrawalRequest(withdrawalRequestId, rejectionReason);
-        return ResponseEntity.ok().build();
-    }
-
+    
     @PutMapping("/{withdrawalRequestId}")
     public ResponseEntity<WithdrawalRequest> updateWithdrawalRequest(@PathVariable Long withdrawalRequestId, 
                                                                       @RequestParam Double newClaimAmountInUsd) {
         WithdrawalRequest updatedRequest = withdrawalRequestService.updateWithdrawalRequest(withdrawalRequestId, newClaimAmountInUsd);
         return ResponseEntity.ok(updatedRequest);
+    }
+    
+    @PutMapping("/{withdrawalRequestId}/approve")
+    public ResponseEntity<?> approveWithdrawalRequest(@PathVariable Long withdrawalRequestId,
+                                                      @RequestParam Long checkerId) {
+        try {
+        	withdrawalRequestService.approveWithdrawalRequest(withdrawalRequestId, checkerId);
+            return ResponseEntity.ok().body("Withdrawal request approved successfully.");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{withdrawalRequestId}/reject")
+    public ResponseEntity<?> rejectWithdrawalRequest(@PathVariable Long withdrawalRequestId,
+                                                     @RequestParam String rejectionReason,
+                                                     @RequestParam Long checkerId) {
+        try {
+        	withdrawalRequestService.rejectWithdrawalRequest(withdrawalRequestId, rejectionReason, checkerId);
+            return ResponseEntity.ok().body("Withdrawal request rejected!");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    @GetMapping("/settled")
+    public ResponseEntity<List<WithdrawalRequest>> getSettledWithdrawalRequestsByCheckerId(@RequestParam Long checkerId) {
+        List<WithdrawalRequest> settledRequests = withdrawalRequestService.getSettledWithdrawalRequestsByCheckerId(checkerId);
+        return ResponseEntity.ok(settledRequests);
+    }
+
+    @GetMapping("/rejected")
+    public ResponseEntity<List<WithdrawalRequest>> getRejectedWithdrawalRequestsByCheckerId(@RequestParam Long checkerId) {
+        List<WithdrawalRequest> rejectedRequests = withdrawalRequestService.getRejectedWithdrawalRequestsByCheckerId(checkerId);
+        return ResponseEntity.ok(rejectedRequests);
     }
 }

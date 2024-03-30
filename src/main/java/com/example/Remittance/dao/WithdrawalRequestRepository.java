@@ -17,5 +17,7 @@ public interface WithdrawalRequestRepository extends JpaRepository<WithdrawalReq
 
 	@Query("SELECT SUM(wr.claimAmount) FROM WithdrawalRequest wr WHERE wr.fundTransfer.id = :fundTransferId AND wr.id != :excludeRequestId")
 	Double sumClaimAmountByFundTransferIdAndExcludeCurrentRequest(@Param("fundTransferId") Long fundTransferId, @Param("excludeRequestId") Long excludeRequestId);
+
+	List<WithdrawalRequest> findByStatusAndCheckerId(WithdrawalStatus settled, Long checkerId);
 }
 

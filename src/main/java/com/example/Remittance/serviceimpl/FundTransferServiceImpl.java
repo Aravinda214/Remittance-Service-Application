@@ -10,6 +10,8 @@ import com.example.Remittance.dao.FundTransferRepository;
 import com.example.Remittance.dao.UserRepository;
 import com.example.Remittance.entity.FundTransfer;
 import com.example.Remittance.entity.User;
+import com.example.Remittance.enums.Currency;
+import com.example.Remittance.service.CurrencyConversionService;
 import com.example.Remittance.service.FundTransferService;
 
 @Service
@@ -20,21 +22,24 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     @Autowired
     private FundTransferRepository fundTransferRepository;
-
+    
+    @Autowired
+    private CurrencyConversionService currencyConversionService;
+    
     @Override
     @Transactional
-    public FundTransfer createFundTransfer(Long senderId, Long receiverId, Double amount, String fromCountry) {
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("Sender not found with id: " + senderId));
+    public FundTransfer createFundTransfer(String senderPhoneNumber, Long receiverId, Double amount, String fromCountry, Currency currency) {
+        User sender = userRepository.findByPhoneNumber(senderPhoneNumber).orElseThrow(() -> new IllegalArgumentException("Sender not found with id: " + senderPhoneNumber));
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new IllegalArgumentException("Receiver not found with id: " + receiverId));
-
+        
+        double claimAmountInUsd = currencyConversionService.convertToUsd(amount, currency);
         FundTransfer fundTransfer = new FundTransfer();
         fundTransfer.setSender(sender);
         fundTransfer.setReceiver(receiver);
-        fundTransfer.setTransactionAmount(amount);
+        fundTransfer.setTransactionAmount(claimAmountInUsd);
         fundTransfer.setFromCountry(fromCountry);
-        
+        fundTransfer.setCurrency(currency);;
         return fundTransferRepository.save(fundTransfer);
     }
 
